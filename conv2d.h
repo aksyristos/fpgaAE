@@ -7,8 +7,12 @@
 // Convolution with stride 1 and odd size kernel
 
 #pragma hls_design interface
-void conv2d(dt a[LEN], dt b[LEN], int HEIGHT, int WIDTH, int IN_FMAP, int OUT_FMAP, int KSIZE){
-	float in_fmaps[IN_FMAP][HEIGHT][WIDTH], float kernel[OUT_FMAP][IN_FMAP][KSIZE][KSIZE], float out_fmaps[OUT_FMAP][HEIGHT][WIDTH]); //prepei na mpei arxikopoihsh
+void conv2d(float *in, float *out, int HEIGHT, int WIDTH, int IN_FMAP, int OUT_FMAP, int KSIZE){
+	float in_fmaps[IN_FMAP][HEIGHT][WIDTH] = *in;
+	float kernel[OUT_FMAP][IN_FMAP][KSIZE][KSIZE];
+	float out_fmaps[OUT_FMAP][HEIGHT][WIDTH]); //prepei na mpei arxikopoihsh
+	
+
     float acc = 0;
     float acc_buf[HEIGHT][WIDTH];
     float data;
