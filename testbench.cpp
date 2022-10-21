@@ -235,7 +235,7 @@ public:
 
     int in_fmaps[2] =  {1,6};
     int out_fmaps[2] = {6,16};
-    int height_width[2] = {30, 14}; //pytorch 30->covnv(28)->pool(14)->conv(14)->pool(7)
+    int height_width[2] = {28, 14}; //pytorch 30 (with pad)->covnv(28)->pool(14)->conv(14)->pool(7)
 
     OUT_FMAP_TYPE output_feature_maps;
     IN_FMAP_TYPE input_feature_maps;
@@ -306,7 +306,7 @@ public:
     cout << "Finished" << endl;
     int mem_offset = MEM_OFFSET;
     int err = 0;
-    puts("kekw");
+
     // Check against reference
     for (int i=0; i<7*7*16; i++) {
       output_file >> tmp;
