@@ -117,8 +117,8 @@ images, labels = dataiter.next()
 
 # get sample outputs
 #images = images.float()
-noise_factor = 0.2
-images = images + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=images.shape) 
+##noise_factor = 0.2                                                                        #uncomment for denoising AE
+##images = images + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=images.shape) 
 #images = np.clip(x_test_noisy, 0., 1.)
 
 output = model(images.float())
