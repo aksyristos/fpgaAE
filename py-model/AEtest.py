@@ -67,7 +67,7 @@ def get_activation(name):
         activation[name] = output.detach()
     return hook
 
-model.encoder.register_forward_hook(get_activation('encoder'))
+model.encoder.register_forward_hook(get_activation('encoder'))          #encoder output (no final layer)
 
 
 
