@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def imshow(img):
-    img = img / 2 + 0.5  # unnormalize
+    #img = img / 2 + 0.5  # unnormalize
     plt.imshow(np.transpose(img, (1, 2, 0)))  # convert from Tensor image
 
 def count_parameters(model):
@@ -75,7 +75,7 @@ model.encoder.register_forward_hook(get_activation('encoder'))          #encoder
 #Load data    
 transform = transforms.Compose(
     [transforms.ToTensor(),
-     transforms.Normalize((0.5), (0.5))
+     #transforms.Normalize((0.5), (0.5))
      ])
 
 batch_size = 5
