@@ -25,10 +25,10 @@ class Net(nn.Module):
         
         self.encoder=nn.Sequential(
             nn.Conv2d(1, 6, 3, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool2d(2,2),
             nn.Conv2d(6, 16, 3, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool2d(2,2),
          
             #nn.Flatten(),
@@ -49,8 +49,12 @@ class Net(nn.Module):
             #nn.Unflatten(dim=1, unflattened_size=(16,7,7)),
             
             nn.ConvTranspose2d(16, 6, 2, stride=2),
-            nn.ReLU(),
+            #nn.Upsample(size=(14,14)),
+            #nn.Conv2d(16, 6, 3, padding=1),
+            nn.LeakyReLU(),
             nn.ConvTranspose2d(6, 1, 2, stride=2),
+            #nn.Upsample(size=(28,28)),
+            #nn.Conv2d(6, 1, 3, padding=1)
         )
 
     def forward(self, x):
@@ -59,32 +63,30 @@ class Net(nn.Module):
         return torch.sigmoid(decoded)
 
 model = Net()
-model = model.float()
+#model = model.float()
 
-activation = {}
-def get_activation(name):
-    def hook(model, input, output):
-        activation[name] = output.detach()
-    return hook
-
-model.encoder.register_forward_hook(get_activation('encoder'))          #encoder output (no final layer)
-
-
-
-    
 #Load data    
 transform = transforms.Compose(
     [transforms.ToTensor(),
      #transforms.Normalize((0.5), (0.5))
      ])
 
-batch_size = 5
+batch_size = 200
 
 trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transforms.ToTensor())
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=200, shuffle=True, num_workers=0)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=0)
 
 testset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=0)
+
+activation = {}
+def get_activation(name):
+    def hook(model, input, output):
+        activation[name] = output.detach()
+    return hook
+model.encoder.register_forward_hook(get_activation('encoder'))
+
+#print(activation['encoder'])
 
 
 #TRAINING  
@@ -96,7 +98,7 @@ optimizer = torch.optim.Adam(model.parameters(),
                              lr = 1e-2,
                              weight_decay = 1e-8)
 
-epochs = 15
+epochs = 2
 for epoch in range(epochs):
     train_loss=0.0
     for data in trainloader:
@@ -128,8 +130,8 @@ images, labels = dataiter.next()
 
 # get sample outputs
 #images = images.float()
-##noise_factor = 0.2																				#uncomment for denoising AE
-##images = images + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=images.shape) 
+#noise_factor = 0.2
+#images = images + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=images.shape) 
 #images = np.clip(x_test_noisy, 0., 1.)
 
 output = model(images.float())
@@ -139,18 +141,43 @@ output = output.detach().numpy() #detach because out requires_grad
 
 #Original Images
 print("Original Images")
-fig, axes = plt.subplots(nrows=1, ncols=5, sharex=True, sharey=True, figsize=(12,4))
-for idx in np.arange(5):
-    ax = fig.add_subplot(1,5, idx+1, xticks=[], yticks=[])
+fig, axes = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(12,4))
+for idx in np.arange(1):
+    ax = fig.add_subplot(1,1, idx+1, xticks=[], yticks=[])
     imshow(images[idx])
     ax.set_title(classes[labels[idx]])
 plt.show()
 
 #Reconstructed Images
 print('Reconstructed Images')
-fig, axes = plt.subplots(nrows=1, ncols=5, sharex=True, sharey=True, figsize=(12,4))
-for idx in np.arange(5):
-    ax = fig.add_subplot(1, 5, idx+1, xticks=[], yticks=[])
+fig, axes = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True, figsize=(12,4))
+for idx in np.arange(1):
+    ax = fig.add_subplot(1, 1, idx+1, xticks=[], yticks=[])
     imshow(output[idx])
     ax.set_title(classes[labels[idx]])
 plt.show() 
+
+bias = open("bias.txt", "w") 
+out = open("output.txt", "w") 
+kernel = open("kernel.txt", "w") 
+
+print("\nBIAS")
+for i in range(6):bias.write(str(model.encoder[0].bias.detach().numpy()[i])+'\n')
+for i in range(16):bias.write(str(model.encoder[3].bias.detach().numpy()[i])+'\n')
+
+print("\nOUTPUT")
+for k in range(16):
+    for i in range(7):
+        for j in range(7):out.write(str(activation['encoder'].numpy()[0][k][i][j])+'\n')
+
+print("\nKERNEL")
+for i in range(6):
+    for j in range(1):
+        for k in range(3):
+            for l in range(3):kernel.write(str(model.encoder[0].weight.detach().numpy()[i][j][k][l])+'\n')
+for i in range(16):
+    for j in range(6):
+        for k in range(3):
+            for l in range(3):kernel.write(str(model.encoder[3].weight.detach().numpy()[i][j][k][l])+'\n')
+
+bias.close();out.close();kernel.close()
