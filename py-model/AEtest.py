@@ -60,7 +60,7 @@ class Net(nn.Module):
     def forward(self, x):
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
-        return torch.sigmoid(decoded)
+        return torch.tanh(decoded)
 
 model = Net()
 #model = model.float()
@@ -98,7 +98,7 @@ optimizer = torch.optim.Adam(model.parameters(),
                              lr = 1e-2,
                              weight_decay = 1e-8)
 
-epochs = 2
+epochs = 10
 for epoch in range(epochs):
     train_loss=0.0
     for data in trainloader:
@@ -160,15 +160,18 @@ plt.show()
 bias = open("bias.txt", "w") 
 out = open("output.txt", "w") 
 kernel = open("kernel.txt", "w") 
+act = open("activation.txt", "w") 
 
 print("\nBIAS")
 for i in range(6):bias.write(str(model.encoder[0].bias.detach().numpy()[i])+'\n')
 for i in range(16):bias.write(str(model.encoder[3].bias.detach().numpy()[i])+'\n')
+for i in range(6):bias.write(str(model.decoder[0].bias.detach().numpy()[i])+'\n')
+bias.write(str(model.decoder[2].bias.detach().numpy()[0])+'\n')
 
-print("\nOUTPUT")
+print("\nACTIVATION")
 for k in range(16):
     for i in range(7):
-        for j in range(7):out.write(str(activation['encoder'].numpy()[0][k][i][j])+'\n')
+        for j in range(7):act.write(str(activation['encoder'].numpy()[0][k][i][j])+'\n')
 
 print("\nKERNEL")
 for i in range(6):
@@ -179,5 +182,17 @@ for i in range(16):
     for j in range(6):
         for k in range(3):
             for l in range(3):kernel.write(str(model.encoder[3].weight.detach().numpy()[i][j][k][l])+'\n')
+for i in range(16):
+    for j in range(6):
+        for k in range(2):
+            for l in range(2):kernel.write(str(model.decoder[0].weight.detach().numpy()[i][j][k][l])+'\n')
+for i in range(6):
+    for j in range(1):
+        for k in range(2):
+            for l in range(2):kernel.write(str(model.decoder[2].weight.detach().numpy()[i][j][k][l])+'\n')
 
-bias.close();out.close();kernel.close()
+print("\nOUTPUT")
+for k in range(28):
+    for l in range(28):out.write(str(output[0][0][k][l])+'\n')
+
+bias.close();out.close();kernel.close();act.close()
