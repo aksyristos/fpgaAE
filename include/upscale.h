@@ -67,7 +67,7 @@ public:
     IFM: for (int ifm=0; ifm<IN_FMAP; ifm++) { // Input feature map
       ZERO_I: for (int r=0; r<MAX_HEIGHT; r++) { // Process upscaled map
         ZERO_J: for (int c=0; c<MAX_WIDTH; c++) {
-          out_fmaps[write_offset + r*width + c] = 0;
+          out_fmaps[write_offset + r*(2*width-1) + c] = 0;
           if (c == 2*width-2) { break; }
         }
         if (r == 2*height-2) { break; }
