@@ -28,15 +28,15 @@
  *  The most recent version of this package is available at github.       *
  *                                                                        *
  *************************************************************************/
-#ifndef _INCLUDED_LEAKYRELUALG_H_
-#define _INCLUDED_LEAKYRELUALG_H_
+#ifndef _INCLUDED_UPSCALE_H_
+#define _INCLUDED_UPSCALE_H_
 
 #include "types.h"
 #include <mc_scverify.h>
 
 // Convolution with stride 1 and odd size kernel
 template<typename DTYPE, int MAX_HEIGHT, int MAX_WIDTH, int IN_FMAP, int MEM_SIZE>
-class leakyReLuAlg
+class upscaleAlg
 {
   enum {
     HEIGHT_BITS = ac::nbits<MAX_HEIGHT>::val,
