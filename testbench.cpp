@@ -39,7 +39,9 @@ using namespace std;
 
 #include "maxPoolAlg.h"
 #include "leakyReLuAlg.h"
+#include "tanh.h"
 #include "biasAlg.h"
+#include "upscale.h"
 #include "conv2d.h"
 #include "conv2d1x1.h"
 #include "types.h"
@@ -158,6 +160,8 @@ public:
     unsigned long int sec = time(NULL);
     maxPoolAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,IN_FMAP,MEM_SIZE> max_pool;
     leakyReLuAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> leaky_relu;
+    upscaleAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> upscale;
+    tanhAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> tanh;
     biasAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> bias;
     DTYPE bias_mem[BIAS_SIZE];
 
@@ -233,9 +237,9 @@ public:
       addr++;
     }
 
-    int in_fmaps[2] =  {1,6};
-    int out_fmaps[2] = {6,16};
-    int height_width[2] = {28, 14}; //pytorch 30 (with pad)->covnv(28)->pool(14)->conv(14)->pool(7)
+    int in_fmaps[4] =  {1,6,16,6};
+    int out_fmaps[4] = {6,16,6,1};
+    int height_width[4] = {28, 14, 7, 14}; //pytorch 30 (with pad)->covnv(28)->pool(14)->conv(14)->pool(7)
 
     OUT_FMAP_TYPE output_feature_maps;
     IN_FMAP_TYPE input_feature_maps;
@@ -257,7 +261,7 @@ public:
     #ifdef ONLY_LAYER_8
     for (int layer=7 ; layer<8; layer++)
     #else
-    for (int layer=0 ; layer<2; layer++)
+    for (int layer=0 ; layer<4; layer++)
     #endif
     {
       printf("Layer = %d \n",layer+1);
@@ -281,14 +285,14 @@ public:
 
       if (layer < 2) {
         start.sync_out();
-        done.sync_in();
+        done.sync_in();        
         bias.run(mem,bias_mem,mem,output_feature_maps,fmap_height,fmap_width,woffset,woffset,bias_offset); // Add bias in place
         bias_offset += out_fmaps[layer];
         wt_offset += input_feature_maps*output_feature_maps*KSIZESQ; // move to next set of weights
         weight_offset.write(wt_offset);
         leaky_relu.run(mem,mem,output_feature_maps,fmap_height,fmap_width,woffset,woffset); // WReLu in place
-        if (layer < 2) { // Max pool on first 6 layers
-          if (true) { stride = 1; }
+        if (layer < 2) { // Max pool on first 2 layers
+          //if (true) { stride = 1; }
           max_pool.run(mem,mem,output_feature_maps,fmap_height,fmap_width,woffset,roffset,stride); // Write back to orignal fmap location
         } else { // Otherwise swap buffers
           roffset = (layer&1) ? 0 : MEM_OFFSET;
@@ -296,32 +300,48 @@ public:
           read_offset.write(roffset);
           write_offset.write(woffset);
         }
-      } else { // Just 1x1 on final layer
+      } else {
+      upscale.run(mem,mem,output_feature_maps,fmap_height,fmap_width,woffset,woffset); 
+      start.sync_out();
+      done.sync_in();
+      bias.run(mem,bias_mem,mem,output_feature_maps,2*fmap_height-1,2*fmap_width-1,woffset,woffset,bias_offset); // Add bias in place
+      bias_offset += out_fmaps[layer];
+      wt_offset += input_feature_maps*output_feature_maps*4; // move to next set of weights
+      weight_offset.write(wt_offset);
+      if (layer == 2) {leaky_relu.run(mem,mem,output_feature_maps,2*fmap_height-1,2*fmap_width-1,woffset,woffset);}
+      /*// Just 1x1 on final layer
         printf("HWeights = %f\n", (mem[woffset]).to_double());
         conv2d1x1_inst.run(mem,mem,input_feature_maps,output_feature_maps,fmap_height,fmap_width,roffset,woffset,wt_offset);
         bias.run(mem,bias_mem,mem,output_feature_maps,fmap_height,fmap_width,woffset,woffset,bias_offset); // Add bias in place
+        //*/
       }
+      if (layer == 3) {tanh.run(mem,mem,output_feature_maps,2*fmap_height-1,2*fmap_width-1,woffset,woffset);}
 
     }
     cout << "Finished" << endl;
     int mem_offset = MEM_OFFSET;
     int err = 0;
-
+    float perr=0;
+    ofstream f("fucker.txt");
+  
     // Check against reference
-    for (int i=0; i<7*7*16; i++) {
+    for (int i=0; i<28*28*1; i++) {
       output_file >> tmp;
+      f << mem[mem_offset+i] << endl;
       if (SAT_TYPE(tmp) != mem[mem_offset+i]) {
         printf("%f  %f \n", SAT_TYPE(tmp).to_double(), mem[mem_offset+i].to_double());
+        perr += abs((SAT_TYPE(tmp) - mem[mem_offset+i]).to_double());
         err++;
       }
     }
     if (err !=0) {
-      cout << "Errors = " << err << endl;
+      cout << "Average Error Margin = " << perr/err << endl;
     } else {
       cout << "Passed " << endl;
     }
     sec = time(NULL) - sec;
     cout << "Finished in "<< sec << "seconds" << endl;
+    f.close();
     wait();
     sc_stop();
   }
@@ -368,4 +388,3 @@ int sc_main(int argc, char *argv[])
   }
   return errcnt;
 }
-
