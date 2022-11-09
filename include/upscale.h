@@ -53,7 +53,7 @@ public:
   typedef ac_fixed<DTYPE::width,DTYPE::i_width,true,AC_RND,AC_SAT> SAT_TYPE;
 
 public:
-  leakyReLuAlg() {}
+  upscaleAlg() {}
 
   void run(DTYPE in_fmaps[MEM_SIZE],
            DTYPE out_fmaps[MEM_SIZE],
@@ -67,16 +67,17 @@ public:
     IFM: for (int ifm=0; ifm<IN_FMAP; ifm++) { // Input feature map
       ZERO_I: for (int r=0; r<MAX_HEIGHT; r++) { // Process upscaled map
         ZERO_J: for (int c=0; c<MAX_WIDTH; c++) {
-          out_fmaps[write_offset + r*(2*width-1) + c] = 0;
+          out_fmaps[write_offset + ifm*height*width + r*2*width-r + c] = 0;
           if (c == 2*width-2) { break; }
         }
         if (r == 2*height-2) { break; }
       }
   
-      int offset = 0;
+      int offset=0;
       ROW: for (int r=0; r<MAX_HEIGHT; r++) { // Process feature map
         COL: for (int c=0; c<MAX_WIDTH; c++) {
-          out_fmaps[write_offset + 2*r*width + 2*c + offset] = in_fmaps[read_offset + ifm*height*width + r*width + c];
+          data = in_fmaps[read_offset + ifm*height*width + r*width + c];
+          out_fmaps[write_offset + ifm*height*width + 2*r*width + 2*c + offset] = data;
           if (c == width-1) { offset += 2*width - 2; break; }
         }
         if (r == height-1) { break; }
