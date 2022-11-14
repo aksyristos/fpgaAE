@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-#import torch.nn.functional as F
+import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 
@@ -22,45 +22,30 @@ class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
-        
-        self.encoder=nn.Sequential(
-            nn.Conv2d(1, 6, 3, padding=1),
-            nn.LeakyReLU(),
-            nn.MaxPool2d(2,2),
-            nn.Conv2d(6, 16, 3, padding=1),
-            nn.LeakyReLU(),
-            nn.MaxPool2d(2,2),
-         
-            #nn.Flatten(),
- 
-            #nn.Linear(16*7*7, 10),
-            #nn.ReLU(),
-            #nn.Linear(128, 10),
-            
-        )
 
-        self.decoder=nn.Sequential(
-            
-            #nn.Linear(10, 128),
-            #nn.ReLU(),
-            #nn.Linear(10, 16*7*7),
-            #nn.ReLU(),
-            
-            #nn.Unflatten(dim=1, unflattened_size=(16,7,7)),
-            
-            nn.ConvTranspose2d(16, 6, 2, stride=2),
-            #nn.Upsample(size=(14,14)),
-            #nn.Conv2d(16, 6, 3, padding=1),
-            nn.LeakyReLU(),
-            nn.ConvTranspose2d(6, 1, 2, stride=2),
-            #nn.Upsample(size=(28,28)),
-            #nn.Conv2d(6, 1, 3, padding=1)
-        )
+        self.conv1=nn.Conv2d(1, 6, 3, padding=1)
+        self.relu1=nn.LeakyReLU()
+        self.pool1=nn.MaxPool2d(2,stride=2)
+        self.conv2=nn.Conv2d(6, 16, 3, padding=1)
+        self.relu2=nn.LeakyReLU()
+        self.pool2=nn.MaxPool2d(2,stride=2)
+
+        self.tconv1=nn.ConvTranspose2d(16, 6, 2, stride=2)
+        self.relu3=nn.LeakyReLU()
+        self.tconv2=nn.ConvTranspose2d(6, 1, 2, stride=2)
+
 
     def forward(self, x):
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return torch.tanh(decoded)
+        x=self.conv1(x)
+        x=self.relu1(x)
+        x=self.pool1(x)
+        x=self.conv2(x)
+        x=self.relu2(x)
+        x=self.pool2(x)
+        x=self.tconv1(x)
+        x=self.relu3(x)
+        x=self.tconv2(x)
+        return torch.tanh(x)
 
 model = Net()
 #model = model.float()
@@ -74,18 +59,18 @@ transform = transforms.Compose(
 batch_size = 200
 
 trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transforms.ToTensor())
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=0)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=0)
 
 testset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=0)
+
 
 activation = {}
 def get_activation(name):
     def hook(model, input, output):
         activation[name] = output.detach()
     return hook
-model.encoder.register_forward_hook(get_activation('encoder'))
-
+model.pool2.register_forward_hook(get_activation('pool2'))
 #print(activation['encoder'])
 
 
@@ -98,7 +83,7 @@ optimizer = torch.optim.Adam(model.parameters(),
                              lr = 1e-2,
                              weight_decay = 1e-8)
 
-epochs = 10
+epochs = 1
 for epoch in range(epochs):
     train_loss=0.0
     for data in trainloader:
@@ -121,8 +106,6 @@ for epoch in range(epochs):
 
 
 print(count_parameters(model))
-print(count_parameters(model.encoder))
-print(count_parameters(model.decoder))
 #TESTING
 
 dataiter = iter(testloader)
@@ -163,33 +146,34 @@ kernel = open("kernel.txt", "w")
 act = open("activation.txt", "w") 
 
 print("\nBIAS")
-for i in range(6):bias.write(str(model.encoder[0].bias.detach().numpy()[i])+'\n')
-for i in range(16):bias.write(str(model.encoder[3].bias.detach().numpy()[i])+'\n')
-for i in range(6):bias.write(str(model.decoder[0].bias.detach().numpy()[i])+'\n')
-bias.write(str(model.decoder[2].bias.detach().numpy()[0])+'\n')
+for i in range(6):bias.write(str(model.conv1.bias.detach().numpy()[i])+'\n')
+for i in range(16):bias.write(str(model.conv2.bias.detach().numpy()[i])+'\n')
+for i in range(6):bias.write(str(model.tconv1.bias.detach().numpy()[i])+'\n')
+bias.write(str(model.tconv2.bias.detach().numpy()[0])+'\n')
 
 print("\nACTIVATION")
 for k in range(16):
     for i in range(7):
-        for j in range(7):act.write(str(activation['encoder'].numpy()[0][k][i][j])+'\n')
+        #for j in range(28):act.write(str(F.leaky_relu(activation['conv1'],2,2).numpy()[0][k][i][j])+'\n')
+        for j in range(7):act.write(str(activation['pool2'].numpy()[0][k][i][j])+'\n')
 
 print("\nKERNEL")
 for i in range(6):
     for j in range(1):
         for k in range(3):
-            for l in range(3):kernel.write(str(model.encoder[0].weight.detach().numpy()[i][j][k][l])+'\n')
+            for l in range(3):kernel.write(str(model.conv1.weight.detach().numpy()[i][j][k][l])+'\n')
 for i in range(16):
     for j in range(6):
         for k in range(3):
-            for l in range(3):kernel.write(str(model.encoder[3].weight.detach().numpy()[i][j][k][l])+'\n')
+            for l in range(3):kernel.write(str(model.conv2.weight.detach().numpy()[i][j][k][l])+'\n')
 for i in range(16):
     for j in range(6):
         for k in range(2):
-            for l in range(2):kernel.write(str(model.decoder[0].weight.detach().numpy()[i][j][k][l])+'\n')
+            for l in range(2):kernel.write(str(model.tconv1.weight.detach().numpy()[i][j][k][l])+'\n')
 for i in range(6):
     for j in range(1):
         for k in range(2):
-            for l in range(2):kernel.write(str(model.decoder[2].weight.detach().numpy()[i][j][k][l])+'\n')
+            for l in range(2):kernel.write(str(model.tconv2.weight.detach().numpy()[i][j][k][l])+'\n')
 
 print("\nOUTPUT")
 for k in range(28):
