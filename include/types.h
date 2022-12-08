@@ -34,17 +34,18 @@
 #include <ac_sysc_macros.h>
 #include <ac_fixed.h>
 #include <ac_sync.h>
+#include <ac_math.h>
 #include <ac_channel.h>
 #include <mc_connections.h>
 
-typedef ac_fixed<16,7> WTYPE;
-typedef ac_fixed<16,7> DTYPE;
-typedef ac_fixed<16,7,true,AC_RND,AC_SAT> SAT_TYPE;
+typedef ac_fixed<8,4> WTYPE;
+typedef ac_fixed<8,4> DTYPE;
+typedef ac_fixed<8,4,true,AC_RND,AC_SAT> SAT_TYPE;
 
-const int MAX_HEIGHT=416;
-const int MAX_WIDTH=416;
-const int IN_FMAP=1024;
-const int OUT_FMAP=1024;
+const int MAX_HEIGHT=28;
+const int MAX_WIDTH=28;
+const int IN_FMAP=16;
+const int OUT_FMAP=16;
 const int KSIZE=3;
 const int KWIDTH=3;
 const int NUM_PAR_OUTPUTS = 2;
@@ -59,12 +60,12 @@ enum {
   IMG_SIZE = MAX_HEIGHT*MAX_WIDTH,//Max feature map size
   KSIZESQ = KSIZE*KSIZE,//number of kernel elements
   IF_KSIZE = KSIZESQ*IN_FMAP,//number of kernel elements per output channel
-  MEM_SIZE = 20000000, //Storage size for input/output fmaps and kernels
+  MEM_SIZE = 30000, //Storage size for input/output fmaps and kernels
   MEM_SIZE_BITS = ac::nbits<MEM_SIZE>::val,
   WEIGHT_OFFSET = IMG_SIZE*16 + IMG_SIZE*16/4,
-  WEIGHT_SIZE = 3*16*9+16*32*9+32*64*9+64*128*9+128*256*9+256*512*9+512*1024*9+1024*1024*9+1024*125*1,
+  WEIGHT_SIZE = 1*6*9+6*16*9+16*6*4+6*1*4,
   MEM_OFFSET = IMG_SIZE*16/4,//TODO Recheck
-  BIAS_SIZE = 16+32+64+128+256+512+1024+1024+125,
+  BIAS_SIZE = 6+16+6+1,
   BIAS_SIZE_BITS = ac::nbits<MEM_SIZE>::val,
   BIAS_OFFSET = WEIGHT_OFFSET+WEIGHT_SIZE,
   MEM_ADDR_BITS = ac::log2_ceil<MEM_SIZE>::val
