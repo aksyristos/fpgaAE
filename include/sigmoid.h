@@ -32,7 +32,7 @@
 #define _INCLUDED_SIGMOIDALG_H_
 
 #include "types.h"
-#include "/home/gkollias/designs/HLS_SEMINAR_2021/step2/ac_math/include/ac_math.h"
+#include "ac_math.h"
 #include <mc_scverify.h>
 
 // Convolution with stride 1 and odd size kernel
