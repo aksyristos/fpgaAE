@@ -67,7 +67,7 @@ public:
     IFM: for (int ifm=0; ifm<IN_FMAP; ifm++) { // Input feature map
       ZERO_I: for (int r=0; r<MAX_HEIGHT; r++) { // Process upscaled map
         ZERO_J: for (int c=0; c<MAX_WIDTH; c++) {
-          out_fmaps[write_offset + ifm*height*width + r*2*width-r + c] = 0;
+          out_fmaps[write_offset + ifm*4*height*width - 2*ifm*height - 2*ifm*width + ifm + r*2*width-r + c] = SAT_TYPE(0.0);
           if (c == 2*width-2) { break; }
         }
         if (r == 2*height-2) { break; }
@@ -77,7 +77,7 @@ public:
       ROW: for (int r=0; r<MAX_HEIGHT; r++) { // Process feature map
         COL: for (int c=0; c<MAX_WIDTH; c++) {
           data = in_fmaps[read_offset + ifm*height*width + r*width + c];
-          out_fmaps[write_offset + ifm*height*width + 2*r*width + 2*c + offset] = data;
+          out_fmaps[write_offset + ifm*4*height*width - 2*ifm*height - 2*ifm*width + ifm + 2*r*width + 2*c + offset] = data;
           if (c == width-1) { offset += 2*width - 2; break; }
         }
         if (r == height-1) { break; }
