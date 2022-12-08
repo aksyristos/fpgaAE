@@ -70,6 +70,13 @@ fi
 AC_TYPES=`pwd`/ac_types
 export AC_TYPES
 
+if [ ! -d ./ac_math ]; then
+  echo "Downloading AC_Math..."
+  git clone http://github.com/hlslibs/ac_math.git
+fi
+AC_MATH=`pwd`/ac_math
+export AC_MATH
+
 # Configure AC Simutils
 if [ ! -d ./ac_simutils ]; then
   echo "Downloading AC_Simutils..."
