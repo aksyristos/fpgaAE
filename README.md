@@ -7,7 +7,7 @@ can be modified as Denoising AE
 
 can be imported to HLS tools (catapult in this case)
 
-
+-forked from https://github.com/hlslibs/ac_ml
 
 # PY model specs
 python 3.8.8
