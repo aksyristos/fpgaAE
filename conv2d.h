@@ -57,6 +57,7 @@ public:
   sc_in<OFFSET_TYPE>              CCS_INIT_S1(read_offset);
   sc_in<OFFSET_TYPE>              CCS_INIT_S1(write_offset);
   sc_in<OFFSET_TYPE>              CCS_INIT_S1(weight_offset);
+  sc_in<bool>                     CCS_INIT_S1(pointwise); // True does 2x2 convolution
   Connections::SyncIn             CCS_INIT_S1(start);
   Connections::SyncOut            CCS_INIT_S1(done);
 
@@ -92,8 +93,9 @@ public:
       OFM: for (int ofm=0; ofm<OUT_FMAP; ofm++) { //output feature map
         IFM: for (int ifm=0; ifm<IN_FMAP; ifm++) { //input feature map
           //Cache 9 weights
-          unsigned int weight_idx = (weight_offset.read() + ofm*num_in_fmaps.read()*KSIZESQ + ifm*KSIZESQ).to_int();
-          mem_in_addr.Push(weight_idx);
+          int ksqidx = pointwise.read() ? 4: KSIZESQ;
+          int ks = pointwise.read() ? 2: KSIZE;
+          unsigned int weight_idx = (weight_offset.read() + ofm*num_in_fmaps.read()*ksqidx + ifm*ksqidx).to_int();mem_in_addr.Push(weight_idx);
           mem_in_burst.Push(9);
           K_X0: for (int kr=0; kr<KSIZE; kr++) { //odd size kernel
             K_Y0: for (int kc=0; kc<KSIZE; kc++) { //odd size kernel
@@ -119,7 +121,8 @@ public:
 
               K_X: for (int kr=0; kr<KSIZE; kr++) { //odd size kernel
                 K_Y: for (int kc=0; kc<KSIZE; kc++) { //odd size kernel
-                  acc +=  window[2-kr][2-kc]*weights[kr][kc]; // perform convolution against input fmap
+                  DTYPE wdat = pointwise.read() ? window[1-kr][1-kc]:window[2-kr][2-kc];
+                  acc +=  wdat*weights[kr][kc]; // perform convolution against input fmap
                 }
               }
               if ((r != 0) && (c != 0)) {
