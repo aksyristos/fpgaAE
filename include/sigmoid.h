@@ -69,7 +69,7 @@ public:
       ROW: for (int r=0; r<MAX_HEIGHT; r++) { // Process feature map
         COL: for (int c=0; c<MAX_WIDTH; c++) {
           data = ac_math::ac_sigmoid_pwl<SAT_TYPE>(in_fmaps[read_offset + ifm*height*width + r*width + c]);
-          if (data > (SAT_TYPE)0.3) { data -= (SAT_TYPE)0.375; }
+          //if (data > (SAT_TYPE)0.3) { data -= (SAT_TYPE)0.375; }
           out_fmaps[write_offset + ifm*height*width + r*width + c] = data;
           if (c == width-1) { break; }
         }
