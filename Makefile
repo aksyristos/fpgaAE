@@ -36,6 +36,9 @@ AC_TYPES ?= $(CATAPULT_HOME)/shared
 # Pick up AC Simutils via "AC_SIMUTILS"
 AC_SIMUTILS ?= $(CATAPULT_HOME)/shared
 
+# Pick up AC Simutils via "AC_MATH"
+AC_MATH ?= $(CATAPULT_HOME)/shared
+
 # Pick up C++ compiler
 CXX := $(CATAPULT_HOME)/bin/g++
 LD_LIBRARY_PATH := $(if $(LD_LIBRARY_PATH),$(LD_LIBRARY_PATH):$(CATAPULT_HOME)/lib:$(CATAPULT_HOME)/shared/lib,$(CATAPULT_HOME)/lib:$(CATAPULT_HOME)/shared/lib)
@@ -57,6 +60,9 @@ $(error - Environment variable MATCHLIB_HOME must be defined)
 endif
 ifndef AC_TYPES
 $(error - Environment variable AC_TYPES must be defined)
+endif
+ifndef AC_MATH
+$(error - Environment variable AC_MATH must be defined)
 endif
 ifndef AC_SIMUTILS
 $(error - Environment variable AC_SIMUTILS must be defined)
@@ -136,8 +142,7 @@ trace.vcd: sim_sc
 	@cp -f $(SOURCE_DIR)../file_io/bias.txt .
 	@cp -f $(SOURCE_DIR)../file_io/data.txt .
 	@cp -f $(SOURCE_DIR)../file_io/output.txt .
-	@cp -f $(SOURCE_DIR)../file_io/kernel.txt.gz .
-	@gzip -f -d kernel.txt.gz
+	@cp -f $(SOURCE_DIR)../file_io/kernel.txt .
 	./$^ .
 
 trace_fast.vcd: sim_sc_fast
@@ -145,8 +150,7 @@ trace_fast.vcd: sim_sc_fast
 	@cp -f $(SOURCE_DIR)../file_io/bias.txt .
 	@cp -f $(SOURCE_DIR)../file_io/data.txt .
 	@cp -f $(SOURCE_DIR)../file_io/output.txt .
-	@cp -f $(SOURCE_DIR)../file_io/kernel.txt.gz .
-	@gzip -f -d kernel.txt.gz
+	@cp -f $(SOURCE_DIR)../file_io/kernel.txt .
 	./$^ .
 
 sim_sc: checkvars $(wildcard $(SOURCE_DIR)*.h) $(wildcard $(SOURCE_DIR)*.cpp)
@@ -189,5 +193,5 @@ help:
 	-@echo ""
 
 clean: sim_clean
-	@rm -rf *.vcd *.wlf design_check* my_log* catapult.log .vscode bias.txt kernel.txt kernel.txt.gz output.txt data.txt
+	@rm -rf *.vcd *.wlf design_check* my_log* catapult.log .vscode bias.txt kernel.txt output.txt data.txt hardwareout.txt
 
