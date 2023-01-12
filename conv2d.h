@@ -31,7 +31,7 @@
 #ifndef _INCLUDED_CONV2D_H_
 #define _INCLUDED_CONV2D_H_
 
-#include "types.h"
+#include "/home/gkollias/designs/HLS_SEMINAR_2021/include/types.h"
 #include <ac_int.h>
 #include <ac_sync.h>
 
@@ -79,37 +79,38 @@ public:
     start.Reset();
     done.Reset();
     ACC_TYPE acc = 0;
-    for (int kr=0; kr<KSIZE; kr++) { //odd size kernel
-      for (int kc=0; kc<KSIZE; kc++) { //odd size kernel
+    for (ac_int<2,false> kr=0; kr<KSIZE; kr++) { //odd size kernel
+      for (ac_int<2,false> kc=0; kc<KSIZE; kc++) { //odd size kernel
         weights[kr][kc] = 0;
       }
     }
-    for (int i=0; i<3; i++) {
+    for (ac_int<2,false> i=0; i<3; i++) {
       data[i] = 0;
     }
     wait();
     while (1) {
       start.sync_in();
-      OFM: for (int ofm=0; ofm<OUT_FMAP; ofm++) { //output feature map
-        IFM: for (int ifm=0; ifm<IN_FMAP; ifm++) { //input feature map
+      OFM: for (ac_int<5,false> ofm=0; ofm<OUT_FMAP; ofm++) { //output feature map
+        IFM: for (ac_int<5,false> ifm=0; ifm<IN_FMAP; ifm++) { //input feature map
           //Cache 9 weights
-          int ksqidx = pointwise.read() ? 4: KSIZESQ;
-          int ks = pointwise.read() ? 2: KSIZE;
-          unsigned int weight_idx = (weight_offset.read() + ofm*num_in_fmaps.read()*ksqidx + ifm*ksqidx).to_int();mem_in_addr.Push(weight_idx);
-          mem_in_burst.Push(9);
-          K_X0: for (int kr=0; kr<KSIZE; kr++) { //odd size kernel
-            K_Y0: for (int kc=0; kc<KSIZE; kc++) { //odd size kernel
+          ac_int<4,false> ksqidx = pointwise.read() ? 4: KSIZESQ;
+          ac_int<2,false> ks = pointwise.read() ? 2: KSIZE;
+          unsigned int weight_idx = (weight_offset.read() + ofm*num_in_fmaps.read()*ksqidx + ifm*ksqidx).to_int();
+          mem_in_addr.Push(weight_idx);
+          mem_in_burst.Push(ksqidx);
+          K_X0: for (ac_int<2,false> kr=0; kr<ks; kr++) { //odd size kernel
+            K_Y0: for (ac_int<2,false> kc=0; kc<ks; kc++) { //odd size kernel
               weights[kr][kc] = mem_in_data.Pop();
             }
           }
-          ROW: for (int r=0; r<MAX_HEIGHT+1; r++) { //process feature map
+          ROW: for (ac_int<5,false> r=0; r<MAX_HEIGHT+1; r++) { //process feature map
             unsigned int data_idx = read_offset.read() + ifm*height.read()*width.read() + r*width.read();
             //Burst a row of data
             if (r != height.read()) {
               mem_in_addr.Push(data_idx);
               mem_in_burst.Push(width.read());
             }
-            COL: for (int c=0; c<MAX_WIDTH+1; c++) {
+            COL: for (ac_int<5,false> c=0; c<MAX_WIDTH+1; c++) {
               acc = 0;
               if (r != height.read() && c != width.read()) //Keep array reads in bounds
               { data[0] = mem_in_data.Pop(); }
@@ -119,8 +120,8 @@ public:
               copy_window();
               zero_pad(r,c,height.read(),width.read());
 
-              K_X: for (int kr=0; kr<KSIZE; kr++) { //odd size kernel
-                K_Y: for (int kc=0; kc<KSIZE; kc++) { //odd size kernel
+              K_X: for (ac_int<2,false> kr=0; kr<KSIZE; kr++) { //odd size kernel
+                K_Y: for (ac_int<2,false> kc=0; kc<KSIZE; kc++) { //odd size kernel
                   DTYPE wdat = pointwise.read() ? window[1-kr][1-kc]:window[2-kr][2-kc];
                   acc +=  wdat*weights[kr][kc]; // perform convolution against input fmap
                 }
@@ -140,12 +141,12 @@ public:
         }
         // Write output feature map
         unsigned int out_idx = 0;
-        ROW_CPY: for (int r=0; r<MAX_HEIGHT; r++) { //feature map
+        ROW_CPY: for (ac_int<5,false> r=0; r<MAX_HEIGHT; r++) { //feature map
           out_idx = write_offset.read() + ofm*height.read()*width.read() + r*width.read();
           //Burst a row of data
           mem_out_addr.Push(out_idx);
           mem_out_burst.Push(width.read());
-          COL_CPY: for (int c=0; c<MAX_WIDTH; c++) {
+          COL_CPY: for (ac_int<5,false> c=0; c<MAX_WIDTH; c++) {
             mem_out_data.Push(SAT_TYPE(acc_buf[r][c]));
             if (c == width.read()-1) { break; }
           }
@@ -168,22 +169,22 @@ public:
   // copy the shift registers to the window array to apply zero padding
   void copy_window() {
 #pragma unroll yes
-    for (int r=0; r<3; r++) {
+    for (ac_int<2,false> r=0; r<3; r++) {
 #pragma unroll yes
-      for (int c=0; c<3; c++) {
+      for (ac_int<2,false> c=0; c<3; c++) {
         window[r][c] = shift_regs[r][c];
       }
     }
   }
 
   // shift the data vertically through the line buffer memories
-  void shift_line_buffers(int x) {
+  void shift_line_buffers(ac_int<5,false> x) {
 #pragma unroll yes
-    for (int i = 0; i < 2; i++) {//read line buffers, slide the window down
+    for (ac_int<2,false> i = 0; i < 2; i++) {//read line buffers, slide the window down
       data[i + 1] = line_buffers[i][x];
     }
 #pragma unroll yes
-    for (int i = 0; i < 2; i++) {//write the line buffers
+    for (ac_int<2,false> i = 0; i < 2; i++) {//write the line buffers
       line_buffers[i][x] = data[i];
     }
   }
@@ -205,10 +206,10 @@ public:
   }
 
   // zero pad outside the image boundary
-  void zero_pad(int y, int x, HEIGHT_TYPE height, WIDTH_TYPE width) {
+  void zero_pad(ac_int<5,false>  y, ac_int<5,false>  x, HEIGHT_TYPE height, WIDTH_TYPE width) {
     //Zero pad window when out of bounds
 #pragma unroll yes
-    for (int i = 0; i < 3; i++) {
+    for (ac_int<2,false> i = 0; i < 3; i++) {
       if (y == 1) {
         window[2][i] = 0;
       } else if (y == height) {
@@ -225,4 +226,3 @@ public:
 };
 
 #endif
-
