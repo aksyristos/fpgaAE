@@ -27,7 +27,7 @@ torchvision 0.11.2
     
   Example for Bourne Shell users:
   
-    . ../set_vars.sh
+    . set_vars.sh
     
    
 
