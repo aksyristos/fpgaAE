@@ -14,6 +14,7 @@
 #    ./matchlib_connections
 #    ./matchlib
 #    ./ac_types
+#    ./ac_math
 #    ./ac_simutils
 
 # It also intentionally unsets CATAPULT_HOME and MGC_HOME
@@ -62,6 +63,13 @@ if (! -e ./ac_types) then
   git clone http://github.com/hlslibs/ac_types.git
 endif
 setenv AC_TYPES `pwd`/ac_types
+
+# Configure AC Math
+if (! -e ./ac_math) then
+  echo "Downloading AC_Math..."
+  git clone http://github.com/hlslibs/ac_math.git
+endif
+setenv AC_MATH `pwd`/ac_math
 
 # Configure AC Simutils
 if (! -e ./ac_simutils) then

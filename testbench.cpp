@@ -37,14 +37,14 @@
 #include <sys/time.h>
 using namespace std;
 
-#include "maxPoolAlg.h"
-#include "leakyReLuAlg.h"
-#include "sigmoid.h"
-#include "biasAlg.h"
-#include "upscale.h"
+#include "../fpgaAE/include/maxPoolAlg.h"
+#include "../fpgaAE/include/leakyReLuAlg.h"
+#include "../fpgaAE/include/sigmoid.h"
+#include "../fpgaAE/include/biasAlg.h"
+#include "../fpgaAE/include/upscale.h"
 #include "conv2d.h"
-#include "conv2d1x1.h"
-#include "types.h"
+#include "../fpgaAE/include/conv2d1x1.h"
+#include "../fpgaAE/include/types.h"
 #include <mc_scverify.h>
 
 class testbench: public sc_module
@@ -162,7 +162,7 @@ public:
     unsigned long int sec = time(NULL);
     maxPoolAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,IN_FMAP,MEM_SIZE> max_pool;
     leakyReLuAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> leaky_relu;
-    upscaleAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> upscale;
+    upscaleAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,IN_FMAP,MEM_SIZE> upscale;
     sigmoidAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> sigmoid;
     biasAlg<DTYPE,MAX_HEIGHT,MAX_WIDTH,OUT_FMAP,MEM_SIZE> bias;
     DTYPE bias_mem[BIAS_SIZE];
@@ -303,7 +303,7 @@ public:
         weight_offset.write(wt_offset);
         if (layer == 2) {leaky_relu.run(mem,mem,output_feature_maps,fmap_height,fmap_width,woffset,woffset);}
         if (layer == 3) {sigmoid.run(mem,mem,output_feature_maps,fmap_height,fmap_width,woffset,roffset);}
-
+      }
     }
     cout << "Finished" << endl;
     int mem_offset = 0;

@@ -90,6 +90,9 @@ checkvar_MATCHLIB_HOME: $(MATCHLIB_HOME)/cmod/include/nvhls_marshaller.h
 # Check: $(AC_TYPES)/include/ac_int.h
 checkvar_AC_TYPES: $(AC_TYPES)/include/ac_int.h
 
+# Check: $(AC_TYPES)/include/ac_int.h
+checkvar_AC_MATH: $(AC_TYPES)/include/ac_math.h
+
 # Check: $(AC_SIMUTILS)/include/mc_scverify.h
 checkvar_AC_SIMUTILS: $(AC_SIMUTILS)/include/mc_scverify.h
 
@@ -103,6 +106,7 @@ export SYSTEMC_HOME
 export CONNECTIONS_HOME
 export MATCHLIB_HOME
 export AC_TYPES
+export AC_MATH
 export AC_SIMUTILS
 export LD_LIBRARY_PATH
 
@@ -116,6 +120,7 @@ INCDIRS += -I$(SYSTEMC_HOME)/include -I$(SYSTEMC_HOME)/src
 INCDIRS += -I$(CONNECTIONS_HOME)/include
 INCDIRS += -I$(MATCHLIB_HOME)/cmod/include
 INCDIRS += -I$(AC_TYPES)/include
+INCDIRS += -I$(AC_MATH)/include
 INCDIRS += -I$(AC_SIMUTILS)/include
 INCDIRS += -I$(SOURCE_DIR)../include
 
@@ -139,18 +144,18 @@ run_fast: trace_fast.vcd
 
 trace.vcd: sim_sc
 	-@echo "Starting execution in directory `pwd`"
-	@cp -f $(SOURCE_DIR)../file_io/bias.txt .
-	@cp -f $(SOURCE_DIR)../file_io/data.txt .
-	@cp -f $(SOURCE_DIR)../file_io/output.txt .
-	@cp -f $(SOURCE_DIR)../file_io/kernel.txt .
+	@cp -f $(SOURCE_DIR)file_io/bias.txt .
+	@cp -f $(SOURCE_DIR)file_io/data.txt .
+	@cp -f $(SOURCE_DIR)file_io/output.txt .
+	@cp -f $(SOURCE_DIR)file_io/kernel.txt .
 	./$^ .
 
 trace_fast.vcd: sim_sc_fast
 	-@echo "Starting execution in directory `pwd`"
-	@cp -f $(SOURCE_DIR)../file_io/bias.txt .
-	@cp -f $(SOURCE_DIR)../file_io/data.txt .
-	@cp -f $(SOURCE_DIR)../file_io/output.txt .
-	@cp -f $(SOURCE_DIR)../file_io/kernel.txt .
+	@cp -f $(SOURCE_DIR)file_io/bias.txt .
+	@cp -f $(SOURCE_DIR)file_io/data.txt .
+	@cp -f $(SOURCE_DIR)file_io/output.txt .
+	@cp -f $(SOURCE_DIR)file_io/kernel.txt .
 	./$^ .
 
 sim_sc: checkvars $(wildcard $(SOURCE_DIR)*.h) $(wildcard $(SOURCE_DIR)*.cpp)

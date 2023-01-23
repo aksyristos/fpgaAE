@@ -31,7 +31,7 @@
 #ifndef _INCLUDED_CONV2D_H_
 #define _INCLUDED_CONV2D_H_
 
-#include "/home/gkollias/designs/HLS_SEMINAR_2021/include/types.h"
+#include <../fpgaAE/include/types.h>
 #include <ac_int.h>
 #include <ac_sync.h>
 
