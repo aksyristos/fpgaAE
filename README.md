@@ -23,7 +23,7 @@ torchvision 0.11.2
 
   Example for C-Shell users:
   
-    source ../set_vars.csh
+    source set_vars.csh
     
   Example for Bourne Shell users:
   
