@@ -35,3 +35,6 @@ torchvision 0.11.2
 
 
 -Use "make help" for a list of options
+
+When using HLS software, run the .tcl scripts to synthesize the optimal design. 
+Vivado.tcl if using Vivado HLS, directives.tcl otherwise.
